@@ -14,9 +14,10 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 /* подправить вывод:
-        сделать, чтобы при каждой новой карте вылезала не только она одна, но и все предыдущие
-        пофиксить 10(вроде как пофиксил)
         добавить слэш-комманды
+        добавить ничью
+        нет действий при олл-ине
+        сделать малые и большие блайнды
  */
 public class Poker extends ListenerAdapter{
     static JDA jda;
@@ -37,6 +38,7 @@ public class Poker extends ListenerAdapter{
     static Message lastMessage;
     private static final Lock lock = new ReentrantLock();
     private static final Condition messageReceived = lock.newCondition();
+    static StringBuffer cardPool = new StringBuffer();
     public static void main(String[] args) throws InterruptedException {
         jda = JDABuilder.createDefault("MTA1ODQ2NTM3Njg5MzE0NTIxMQ.GSHqq-.YZp3Z7HpeyhnUxpYANYBHDKuJkFkfSlPNV0vBI")
                 .enableIntents(GatewayIntent.DIRECT_MESSAGES,
@@ -66,8 +68,7 @@ public class Poker extends ListenerAdapter{
                 }
                 // дебаг:
                 // поставить breakpoint у той строчки с которой начинать проверку
-                // нет действий при олл-ине
-                // сделать малые и большие блайнды
+
                 ArrayList<Integer> betAmounts = new ArrayList<>(playersAmount);
                 for (int i = 0; i < playersIn.size(); i++) {
                     betAmounts.add(i, 0);
@@ -93,12 +94,12 @@ public class Poker extends ListenerAdapter{
                                 System.out.println(lastMessage.getContentRaw());
                                if ((lastMessage.getAuthor().getName() + "#" + lastMessage.getAuthor().getDiscriminator()).equals(playersIn.get(i).getDiscordTag())) {
                                    String betAmount1 = lastMessage.getContentRaw();
-                                   if (betAmount1.equals("fold")) {
+                                   if (betAmount1.toLowerCase(Locale.ROOT).equals("fold")) {
                                        channel.sendMessage("Вы вышли из игры").queue();
                                        playersIn.get(i).isFold = true;
                                    } else {
                                        try {
-                                           if (playersIn.get(i).getBalance() - Integer.parseInt(betAmount1) >= 0) {
+                                           if (playersIn.get(i).getBalance() - Integer.parseInt(betAmount1) >= 0&&Integer.parseInt(betAmount1)>=0) {
                                                if (i == 0 && lastRoundBet == betAmounts.get(0)) {
                                                    playersIn.get(i).setBalance(playersIn.get(i).getBalance() - Integer.parseInt(betAmount1));
                                                    pot = pot + Integer.parseInt(betAmount1);
@@ -166,6 +167,7 @@ public class Poker extends ListenerAdapter{
                     new Poker().shuffle();
                     new Poker().shuffle();
                     new Poker().shuffle();
+                    channel.sendMessage(cardPool).queue();
                     if (!onePlayerLeft) {
                         do {
                             for (int i = 0; i < playersIn.size(); i++) {
@@ -179,12 +181,12 @@ public class Poker extends ListenerAdapter{
                                     System.out.println(lastMessage.getContentRaw());
                                     if ((lastMessage.getAuthor().getName() + "#" + lastMessage.getAuthor().getDiscriminator()).equals(playersIn.get(i).getDiscordTag())) {
                                         String betAmount1 = lastMessage.getContentRaw();
-                                        if (betAmount1.equals("fold")) {
+                                        if (betAmount1.toLowerCase(Locale.ROOT).equals("fold")) {
                                             channel.sendMessage("Вы вышли из игры").queue();
                                             playersIn.get(i).isFold = true;
                                         } else {
                                             try {
-                                                if (playersIn.get(i).getBalance() - Integer.parseInt(betAmount1) >= 0) {
+                                                if (playersIn.get(i).getBalance() - Integer.parseInt(betAmount1) >= 0&&Integer.parseInt(betAmount1)>=0) {
                                                     if (i == 0 && lastRoundBet == betAmounts.get(0)) {
                                                         playersIn.get(i).setBalance(playersIn.get(i).getBalance() - Integer.parseInt(betAmount1));
                                                         pot = pot + Integer.parseInt(betAmount1);
@@ -251,6 +253,7 @@ public class Poker extends ListenerAdapter{
                     }
                     lastRoundBet = betAmounts.get(0);
                     new Poker().shuffle();
+                    channel.sendMessage(cardPool).queue();
                     if (!onePlayerLeft) {
                         do {
                             for (int i = 0; i < playersIn.size(); i++) {
@@ -264,12 +267,12 @@ public class Poker extends ListenerAdapter{
                                     System.out.println(lastMessage.getContentRaw());
                                     if ((lastMessage.getAuthor().getName() + "#" + lastMessage.getAuthor().getDiscriminator()).equals(playersIn.get(i).getDiscordTag())) {
                                         String betAmount1 = lastMessage.getContentRaw();
-                                        if (betAmount1.equals("fold")) {
+                                        if (betAmount1.toLowerCase(Locale.ROOT).equals("fold")) {
                                             channel.sendMessage("Вы вышли из игры").queue();
                                             playersIn.get(i).isFold = true;
                                         } else {
                                             try {
-                                                if (playersIn.get(i).getBalance() - Integer.parseInt(betAmount1) >= 0) {
+                                                if (playersIn.get(i).getBalance() - Integer.parseInt(betAmount1) >= 0&&Integer.parseInt(betAmount1)>=0) {
                                                     if (i == 0 && lastRoundBet == betAmounts.get(0)) {
                                                         playersIn.get(i).setBalance(playersIn.get(i).getBalance() - Integer.parseInt(betAmount1));
                                                         pot = pot + Integer.parseInt(betAmount1);
@@ -336,6 +339,7 @@ public class Poker extends ListenerAdapter{
                     }
                     lastRoundBet = betAmounts.get(0);
                     new Poker().shuffle();
+                    channel.sendMessage(cardPool).queue();
                     if (!onePlayerLeft) {
                         do {
                             for (int i = 0; i < playersIn.size(); i++) {
@@ -349,12 +353,12 @@ public class Poker extends ListenerAdapter{
                                     System.out.println(lastMessage.getContentRaw());
                                     if ((lastMessage.getAuthor().getName() + "#" + lastMessage.getAuthor().getDiscriminator()).equals(playersIn.get(i).getDiscordTag())) {
                                         String betAmount1 = lastMessage.getContentRaw();
-                                        if (betAmount1.equals("fold")) {
+                                        if (betAmount1.toLowerCase(Locale.ROOT).equals("fold")) {
                                             channel.sendMessage("Вы вышли из игры").queue();
                                             playersIn.get(i).isFold = true;
                                         } else {
                                             try {
-                                                if (playersIn.get(i).getBalance() - Integer.parseInt(betAmount1) >= 0) {
+                                                if (playersIn.get(i).getBalance() - Integer.parseInt(betAmount1) >= 0&&Integer.parseInt(betAmount1)>=0) {
                                                     if (i == 0 && lastRoundBet == betAmounts.get(0)) {
                                                         playersIn.get(i).setBalance(playersIn.get(i).getBalance() - Integer.parseInt(betAmount1));
                                                         pot = pot + Integer.parseInt(betAmount1);
@@ -434,13 +438,16 @@ public class Poker extends ListenerAdapter{
                         Map.Entry<PokerPlayer, Long> firstEntry = reverseSortedMap.entrySet().iterator().next();
                         firstEntry.getKey().setBalance(firstEntry.getKey().getBalance() + pot);
                         reverseSortedMap.forEach((key, value) -> {
-                            channel.sendMessage(key.getDiscordTag() + "  has value of:" + value).queue();
+                            channel.sendMessage(key.getDiscordTag() + "  has cards:" + key.getFirstparam()+key.getSecondparam()+" "+key.getFirstparam1()+key.getSecondparam1()).queue();
                         });
                         for (PokerPlayer player: playersActive) {
                             channel.sendMessage(player.getDiscordTag()+" current Balance:"+player.getBalance()).queue();
                         }
                     } else {
                         playersIn.get(0).setBalance(playersIn.get(0).getBalance() + pot);
+                        for (PokerPlayer player: playersActive) {
+                            channel.sendMessage(player.getDiscordTag()+" current Balance:"+player.getBalance()).queue();
+                        }
                     }
                     for (PokerPlayer player : playersIn) {
                         if (player.getBalance() == 0) {
@@ -459,7 +466,7 @@ public class Poker extends ListenerAdapter{
                     cards.clear();
                     filling();
                 }
-                channel.sendMessage("Winner is: " + playersActive.get(0).getDiscordTag()).queue();
+                channel.sendMessage("Absolute Winner is: " + playersActive.get(0).getDiscordTag()).queue();
                 isPlaying = false;
                 names.clear();
             }
@@ -515,9 +522,9 @@ public class Poker extends ListenerAdapter{
                 cards.remove(firstparam + "" + secondparam);
                 deckNumbers.add(firstparam);
                 deckSuits.add(secondparam);
-                channel.sendMessage(String.valueOf(firstparam).replaceAll("\\b11\\b", "J")
+                cardPool.append(String.valueOf(firstparam).replaceAll("\\b11\\b", "J")
                         .replaceAll("\\b12\\b", "Q")
-                        .replaceAll("\\b13\\b", "K").replaceAll("\\b10\\b", "T").replaceAll("(14|1)", "A") + secondparam + " ").queue();
+                        .replaceAll("\\b13\\b", "K").replaceAll("\\b10\\b", "T").replaceAll("(14|1)", "A")).append(secondparam).append(" ");
                 break;
             }
         }
