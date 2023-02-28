@@ -17,17 +17,14 @@ public class PokerPlayer {
         this.id = id;
     }
 
-    public void setDiscordTag(String discordTag) {
-        this.discordTag = discordTag;
-    }
+//    public PokerPlayer getPlayerByDiscordTag(String discordTag) {
+//
+//    }
     public String getDiscordTag() {
         return discordTag;
     }
     public long getId() {
         return id;
-    }
-    public void setId(long id) {
-        this.id = id;
     }
     public int getBalance() {
         return balance;
