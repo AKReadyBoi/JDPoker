@@ -790,7 +790,7 @@ public class Poker extends ListenerAdapter{
             this.discordTag = discordTag;
             this.id = id;
         }
-        //    ublic PokerPlayer getPlayerByDiscordTag(String discordTag) {
+        //    blic PokerPlayer getPlayerByDiscordTag(String discordTag) {
 //
 //    }
         public String getDiscordTag() {
