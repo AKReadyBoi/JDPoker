@@ -43,7 +43,7 @@ public class Poker extends ListenerAdapter {
     static StringBuffer cardPool = new StringBuffer();
 
     public static void main(String[] args) throws InterruptedException {
-        jda = JDABuilder.createDefault("MTA1ODQ2NTM3Njg5MzE0NTIxMQ.GSHqq-.YZp3Z7HpeyhnUxpYANYBHDKuJkFkfSlPNV0vBI")
+        jda = JDABuilder.createDefault("MTA1ODQ2NTM3Njg5MzE0NTIxMQ.GZb_pp.0GbbK98trvXTt69h0hrn3NMFcR38_ajXgv__pU")
                 .enableIntents(GatewayIntent.DIRECT_MESSAGES,
                         GatewayIntent.DIRECT_MESSAGE_TYPING,
                         GatewayIntent.DIRECT_MESSAGE_REACTIONS,
@@ -73,7 +73,7 @@ public class Poker extends ListenerAdapter {
             ArrayList<PokerPlayer> playersIn = new ArrayList<>();
             ArrayList<PokerPlayer> playersActive = new ArrayList<>(playersIn);
             for (int i = 0; i < playersAmount; i++) {
-                PokerPlayer pokerPlayer = new PokerPlayer(10000 + i, 1, "a", 1, "a", names.get(i), ids.get(i));
+                PokerPlayer pokerPlayer = new PokerPlayer(10000, 1, "a", 1, "a", names.get(i), ids.get(i));
                 playersIn.add(pokerPlayer);
             }
             ArrayList<Integer> betAmounts = new ArrayList<>(playersAmount);
@@ -152,15 +152,10 @@ public class Poker extends ListenerAdapter {
                                     }
 
                                     for (int j = 0; j < playersIn.size(); j++) {
-                                        if (playersIn.get(j).isFold) {
+                                        if (playersIn.get(j).isFold||playersIn.get(j).isAllIn) {
                                             betAmounts.remove(j);
                                             playersIn.remove(playersIn.get(j));
                                             i--;
-                                        } else {
-                                            if (playersIn.get(j).isAllIn) {
-                                                betAmounts.remove(j);
-                                                i--;
-                                            }
                                         }
                                     }
 
@@ -252,15 +247,10 @@ public class Poker extends ListenerAdapter {
                                         }
 
                                         for (int j = 0; j < playersIn.size(); j++) {
-                                            if (playersIn.get(j).isFold) {
+                                            if (playersIn.get(j).isFold||playersIn.get(j).isAllIn) {
                                                 betAmounts.remove(j);
                                                 playersIn.remove(playersIn.get(j));
                                                 i--;
-                                            } else {
-                                                if (playersIn.get(j).isAllIn) {
-                                                    betAmounts.remove(j);
-                                                    i--;
-                                                }
                                             }
                                         }
 
@@ -351,15 +341,10 @@ public class Poker extends ListenerAdapter {
                                         }
 
                                         for (int j = 0; j < playersIn.size(); j++) {
-                                            if (playersIn.get(j).isFold) {
+                                            if (playersIn.get(j).isFold||playersIn.get(j).isAllIn) {
                                                 betAmounts.remove(j);
                                                 playersIn.remove(playersIn.get(j));
                                                 i--;
-                                            } else {
-                                                if (playersIn.get(j).isAllIn) {
-                                                    betAmounts.remove(j);
-                                                    i--;
-                                                }
                                             }
                                         }
 
@@ -450,15 +435,10 @@ public class Poker extends ListenerAdapter {
                                         }
 
                                         for (int j = 0; j < playersIn.size(); j++) {
-                                            if (playersIn.get(j).isFold) {
+                                            if (playersIn.get(j).isFold||playersIn.get(j).isAllIn) {
                                                 betAmounts.remove(j);
                                                 playersIn.remove(playersIn.get(j));
                                                 i--;
-                                            } else {
-                                                if (playersIn.get(j).isAllIn) {
-                                                    betAmounts.remove(j);
-                                                    i--;
-                                                }
                                             }
                                         }
 
@@ -535,7 +515,8 @@ public class Poker extends ListenerAdapter {
                 }
                 System.out.println(playersActive);
                 playersActive.removeIf(player -> player.getBalance() == 0);
-                playersIn = playersActive;
+                playersIn.clear();
+                playersIn.addAll(playersActive);
                 betAmounts.clear();
                 deckNumbers.clear();
                 deckSuits.clear();
