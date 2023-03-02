@@ -4,9 +4,10 @@ public class PokerPlayer {
     private int firstparam1;
     private String secondparam;
     private String secondparam1;
-    private String discordTag;
+    private final String discordTag;
     public boolean isFold=false;
-    private long id;
+    public boolean isAllIn=false;
+    private final long id;
     public PokerPlayer(int balance, int firstparam, String secondparam, int firstparam1, String secondparam1, String discordTag, long id) {
         this.balance = balance;
         this.firstparam = firstparam;
@@ -16,7 +17,6 @@ public class PokerPlayer {
         this.discordTag = discordTag;
         this.id = id;
     }
-
 //    public PokerPlayer getPlayerByDiscordTag(String discordTag) {
 //
 //    }

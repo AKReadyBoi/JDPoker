@@ -14,10 +14,10 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 /* подправить вывод:
-        добавить слэш-комманды
-        добавить ничью
-        нет действий при олл-ине
-        сделать малые и большие блайнды
+        1) нет действий при олл-ине
+        2) сделать малые и большие блайнды
+        3) добавить ничью
+        4) добавить слэш-комманды
  */
 public class Poker extends ListenerAdapter{
     static JDA jda;
@@ -66,9 +66,6 @@ public class Poker extends ListenerAdapter{
                     PokerPlayer pokerPlayer = new PokerPlayer(10000, 1, "a", 1, "a", names.get(i), ids.get(i));
                     playersIn.add(pokerPlayer);
                 }
-                // дебаг:
-                // поставить breakpoint у той строчки с которой начинать проверку
-
                 ArrayList<Integer> betAmounts = new ArrayList<>(playersAmount);
                 for (int i = 0; i < playersIn.size(); i++) {
                     betAmounts.add(i, 0);
@@ -84,14 +81,13 @@ public class Poker extends ListenerAdapter{
                     }
                     do {
                         for (int i = 0; i < playersIn.size(); i++) {
-                            if (!playersIn.get(i).isFold) {
+                            if (!(playersIn.get(i).isFold||playersIn.get(i).isAllIn)) {
                                 lock.lock();
                                 try {
                                     messageReceived.await();
                                 } finally {
                                     lock.unlock();
                                 }
-                                System.out.println(lastMessage.getContentRaw());
                                if ((lastMessage.getAuthor().getName() + "#" + lastMessage.getAuthor().getDiscriminator()).equals(playersIn.get(i).getDiscordTag())) {
                                    String betAmount1 = lastMessage.getContentRaw();
                                    if (betAmount1.toLowerCase(Locale.ROOT).equals("fold")) {
@@ -99,7 +95,7 @@ public class Poker extends ListenerAdapter{
                                        playersIn.get(i).isFold = true;
                                    } else {
                                        try {
-                                           if (playersIn.get(i).getBalance() - Integer.parseInt(betAmount1) >= 0&&Integer.parseInt(betAmount1)>=0) {
+                                           if (playersIn.get(i).getBalance() - Integer.parseInt(betAmount1) > 0&&Integer.parseInt(betAmount1)>=0) {
                                                if (i == 0 && lastRoundBet == betAmounts.get(0)) {
                                                    playersIn.get(i).setBalance(playersIn.get(i).getBalance() - Integer.parseInt(betAmount1));
                                                    pot = pot + Integer.parseInt(betAmount1);
@@ -129,15 +125,24 @@ public class Poker extends ListenerAdapter{
                                                    }
                                                }
                                            } else {
-                                               channel.sendMessage("Нет средств").queue();
-                                               i--;
+                                               if(playersIn.get(i).getBalance() - Integer.parseInt(betAmount1) == 0&&Integer.parseInt(betAmount1)>=0) {
+                                                   playersIn.get(i).isAllIn=true;
+                                                   channel.sendMessage("You`re All-In!").queue();
+                                                   playersIn.get(i).setBalance(playersIn.get(i).getBalance() - Integer.parseInt(betAmount1));
+                                                   pot = pot + Integer.parseInt(betAmount1);
+                                                   int j = betAmounts.get(i);
+                                                   betAmounts.set(i, Integer.parseInt(betAmount1) + j);
+                                               } else {
+                                                   channel.sendMessage("Нет средств").queue();
+                                                   i--;
+                                               }
                                            }
                                        } catch (NumberFormatException e) {
                                            i--;
                                        }
 
                                        for (int j = 0; j < playersIn.size(); j++) {
-                                           if (playersIn.get(j).isFold) {
+                                           if (playersIn.get(j).isFold||playersIn.get(j).isAllIn) {
                                                betAmounts.remove(j);
                                                playersIn.remove(playersIn.get(j));
                                                i--;
@@ -171,14 +176,13 @@ public class Poker extends ListenerAdapter{
                     if (!onePlayerLeft) {
                         do {
                             for (int i = 0; i < playersIn.size(); i++) {
-                                if (!playersIn.get(i).isFold) {
+                                if (!(playersIn.get(i).isFold||playersIn.get(i).isAllIn)) {
                                     lock.lock();
                                     try {
                                         messageReceived.await();
                                     } finally {
                                         lock.unlock();
                                     }
-                                    System.out.println(lastMessage.getContentRaw());
                                     if ((lastMessage.getAuthor().getName() + "#" + lastMessage.getAuthor().getDiscriminator()).equals(playersIn.get(i).getDiscordTag())) {
                                         String betAmount1 = lastMessage.getContentRaw();
                                         if (betAmount1.toLowerCase(Locale.ROOT).equals("fold")) {
@@ -186,7 +190,7 @@ public class Poker extends ListenerAdapter{
                                             playersIn.get(i).isFold = true;
                                         } else {
                                             try {
-                                                if (playersIn.get(i).getBalance() - Integer.parseInt(betAmount1) >= 0&&Integer.parseInt(betAmount1)>=0) {
+                                                if (playersIn.get(i).getBalance() - Integer.parseInt(betAmount1) > 0&&Integer.parseInt(betAmount1)>=0) {
                                                     if (i == 0 && lastRoundBet == betAmounts.get(0)) {
                                                         playersIn.get(i).setBalance(playersIn.get(i).getBalance() - Integer.parseInt(betAmount1));
                                                         pot = pot + Integer.parseInt(betAmount1);
@@ -216,15 +220,24 @@ public class Poker extends ListenerAdapter{
                                                         }
                                                     }
                                                 } else {
-                                                    channel.sendMessage("Нет средств").queue();
-                                                    i--;
+                                                    if(playersIn.get(i).getBalance() - Integer.parseInt(betAmount1) == 0&&Integer.parseInt(betAmount1)>=0) {
+                                                        playersIn.get(i).isAllIn=true;
+                                                        channel.sendMessage("You`re All-In!").queue();
+                                                        playersIn.get(i).setBalance(playersIn.get(i).getBalance() - Integer.parseInt(betAmount1));
+                                                        pot = pot + Integer.parseInt(betAmount1);
+                                                        int j = betAmounts.get(i);
+                                                        betAmounts.set(i, Integer.parseInt(betAmount1) + j);
+                                                    } else {
+                                                        channel.sendMessage("Нет средств").queue();
+                                                        i--;
+                                                    }
                                                 }
                                             } catch (NumberFormatException e) {
                                                 i--;
                                             }
 
                                             for (int j = 0; j < playersIn.size(); j++) {
-                                                if (playersIn.get(j).isFold) {
+                                                if (playersIn.get(j).isFold||playersIn.get(j).isAllIn) {
                                                     betAmounts.remove(j);
                                                     playersIn.remove(playersIn.get(j));
                                                     i--;
@@ -257,14 +270,13 @@ public class Poker extends ListenerAdapter{
                     if (!onePlayerLeft) {
                         do {
                             for (int i = 0; i < playersIn.size(); i++) {
-                                if (!playersIn.get(i).isFold) {
+                                if (!(playersIn.get(i).isFold||playersIn.get(i).isAllIn)) {
                                     lock.lock();
                                     try {
                                         messageReceived.await();
                                     } finally {
                                         lock.unlock();
                                     }
-                                    System.out.println(lastMessage.getContentRaw());
                                     if ((lastMessage.getAuthor().getName() + "#" + lastMessage.getAuthor().getDiscriminator()).equals(playersIn.get(i).getDiscordTag())) {
                                         String betAmount1 = lastMessage.getContentRaw();
                                         if (betAmount1.toLowerCase(Locale.ROOT).equals("fold")) {
@@ -272,7 +284,7 @@ public class Poker extends ListenerAdapter{
                                             playersIn.get(i).isFold = true;
                                         } else {
                                             try {
-                                                if (playersIn.get(i).getBalance() - Integer.parseInt(betAmount1) >= 0&&Integer.parseInt(betAmount1)>=0) {
+                                                if (playersIn.get(i).getBalance() - Integer.parseInt(betAmount1) > 0&&Integer.parseInt(betAmount1)>=0) {
                                                     if (i == 0 && lastRoundBet == betAmounts.get(0)) {
                                                         playersIn.get(i).setBalance(playersIn.get(i).getBalance() - Integer.parseInt(betAmount1));
                                                         pot = pot + Integer.parseInt(betAmount1);
@@ -302,15 +314,24 @@ public class Poker extends ListenerAdapter{
                                                         }
                                                     }
                                                 } else {
-                                                    channel.sendMessage("Нет средств").queue();
-                                                    i--;
+                                                    if(playersIn.get(i).getBalance() - Integer.parseInt(betAmount1) == 0&&Integer.parseInt(betAmount1)>=0) {
+                                                        playersIn.get(i).isAllIn=true;
+                                                        channel.sendMessage("You`re All-In!").queue();
+                                                        playersIn.get(i).setBalance(playersIn.get(i).getBalance() - Integer.parseInt(betAmount1));
+                                                        pot = pot + Integer.parseInt(betAmount1);
+                                                        int j = betAmounts.get(i);
+                                                        betAmounts.set(i, Integer.parseInt(betAmount1) + j);
+                                                    } else {
+                                                        channel.sendMessage("Нет средств").queue();
+                                                        i--;
+                                                    }
                                                 }
                                             } catch (NumberFormatException e) {
                                                 i--;
                                             }
 
                                             for (int j = 0; j < playersIn.size(); j++) {
-                                                if (playersIn.get(j).isFold) {
+                                                if (playersIn.get(j).isFold||playersIn.get(j).isAllIn) {
                                                     betAmounts.remove(j);
                                                     playersIn.remove(playersIn.get(j));
                                                     i--;
@@ -343,14 +364,13 @@ public class Poker extends ListenerAdapter{
                     if (!onePlayerLeft) {
                         do {
                             for (int i = 0; i < playersIn.size(); i++) {
-                                if (!playersIn.get(i).isFold) {
+                                if (!(playersIn.get(i).isFold||playersIn.get(i).isAllIn)) {
                                     lock.lock();
                                     try {
                                         messageReceived.await();
                                     } finally {
                                         lock.unlock();
                                     }
-                                    System.out.println(lastMessage.getContentRaw());
                                     if ((lastMessage.getAuthor().getName() + "#" + lastMessage.getAuthor().getDiscriminator()).equals(playersIn.get(i).getDiscordTag())) {
                                         String betAmount1 = lastMessage.getContentRaw();
                                         if (betAmount1.toLowerCase(Locale.ROOT).equals("fold")) {
@@ -358,7 +378,7 @@ public class Poker extends ListenerAdapter{
                                             playersIn.get(i).isFold = true;
                                         } else {
                                             try {
-                                                if (playersIn.get(i).getBalance() - Integer.parseInt(betAmount1) >= 0&&Integer.parseInt(betAmount1)>=0) {
+                                                if (playersIn.get(i).getBalance() - Integer.parseInt(betAmount1) > 0&&Integer.parseInt(betAmount1)>=0) {
                                                     if (i == 0 && lastRoundBet == betAmounts.get(0)) {
                                                         playersIn.get(i).setBalance(playersIn.get(i).getBalance() - Integer.parseInt(betAmount1));
                                                         pot = pot + Integer.parseInt(betAmount1);
@@ -388,15 +408,24 @@ public class Poker extends ListenerAdapter{
                                                         }
                                                     }
                                                 } else {
-                                                    channel.sendMessage("Нет средств").queue();
-                                                    i--;
+                                                    if(playersIn.get(i).getBalance() - Integer.parseInt(betAmount1) == 0&&Integer.parseInt(betAmount1)>=0) {
+                                                        playersIn.get(i).isAllIn=true;
+                                                        channel.sendMessage("You`re All-In!").queue();
+                                                        playersIn.get(i).setBalance(playersIn.get(i).getBalance() - Integer.parseInt(betAmount1));
+                                                        pot = pot + Integer.parseInt(betAmount1);
+                                                        int j = betAmounts.get(i);
+                                                        betAmounts.set(i, Integer.parseInt(betAmount1) + j);
+                                                    } else {
+                                                        channel.sendMessage("Нет средств").queue();
+                                                        i--;
+                                                    }
                                                 }
                                             } catch (NumberFormatException e) {
                                                 i--;
                                             }
 
                                             for (int j = 0; j < playersIn.size(); j++) {
-                                                if (playersIn.get(j).isFold) {
+                                                if (playersIn.get(j).isFold||playersIn.get(j).isAllIn) {
                                                     betAmounts.remove(j);
                                                     playersIn.remove(playersIn.get(j));
                                                     i--;
@@ -437,14 +466,33 @@ public class Poker extends ListenerAdapter{
                         playerValues.entrySet().stream().sorted(Map.Entry.comparingByValue(Comparator.reverseOrder())).forEachOrdered(x -> reverseSortedMap.put(x.getKey(), x.getValue()));
                         Map.Entry<PokerPlayer, Long> firstEntry = reverseSortedMap.entrySet().iterator().next();
                         firstEntry.getKey().setBalance(firstEntry.getKey().getBalance() + pot);
-                        reverseSortedMap.forEach((key, value) -> {
-                            channel.sendMessage(key.getDiscordTag() + "  has cards:" + key.getFirstparam()+key.getSecondparam()+" "+key.getFirstparam1()+key.getSecondparam1()).queue();
-                        });
+                        reverseSortedMap.forEach((key, value) -> channel.sendMessage(key.getDiscordTag() + "  has cards:" + String.valueOf(key.getFirstparam()).replaceAll("\\b10\\b", "T").replaceAll("\\b11\\b", "J").replaceAll("\\b12\\b", "Q").replaceAll("\\b13\\b", "K").replaceAll("(14|1)", "A")+key.getSecondparam()+" "+String.valueOf(key.getFirstparam1()).replaceAll("\\b10\\b", "T").replaceAll("\\b11\\b", "J").replaceAll("\\b12\\b", "Q").replaceAll("\\b13\\b", "K").replaceAll("(14|1)", "A")+key.getSecondparam1()).queue());
                         for (PokerPlayer player: playersActive) {
                             channel.sendMessage(player.getDiscordTag()+" current Balance:"+player.getBalance()).queue();
                         }
                     } else {
-                        playersIn.get(0).setBalance(playersIn.get(0).getBalance() + pot);
+                        for (PokerPlayer player : playersActive) {
+                            if(player.isAllIn) {
+                                playersIn.add(player);
+                            }
+                            for (PokerPlayer players : playersIn) {
+                                deckNumbers.add(players.getFirstparam());
+                                deckNumbers.add(players.getFirstparam1());
+                                deckSuits.add(players.getSecondparam());
+                                deckSuits.add(players.getSecondparam1());
+                                playerValues.put(players, new Poker().maxValueHandEvaluation(deckNumbers, deckSuits));
+                                deckNumbers.remove((Object) players.getFirstparam());
+                                deckNumbers.remove((Object) players.getFirstparam1());
+                                deckSuits.remove(players.getSecondparam());
+                                deckSuits.remove(players.getSecondparam1());
+                            }
+                            LinkedHashMap<PokerPlayer, Long> reverseSortedMap = new LinkedHashMap<>();
+                            playerValues.entrySet().stream().sorted(Map.Entry.comparingByValue(Comparator.reverseOrder())).forEachOrdered(x -> reverseSortedMap.put(x.getKey(), x.getValue()));
+                            Map.Entry<PokerPlayer, Long> firstEntry = reverseSortedMap.entrySet().iterator().next();
+                            firstEntry.getKey().setBalance(firstEntry.getKey().getBalance() + pot);
+                            reverseSortedMap.forEach((key, value) -> channel.sendMessage(key.getDiscordTag() + "  has cards:" + String.valueOf(key.getFirstparam()).replaceAll("\\b10\\b", "T").replaceAll("\\b11\\b", "J").replaceAll("\\b12\\b", "Q").replaceAll("\\b13\\b", "K").replaceAll("(14|1)", "A")+key.getSecondparam()+" "+String.valueOf(key.getFirstparam1()).replaceAll("\\b10\\b", "T").replaceAll("\\b11\\b", "J").replaceAll("\\b12\\b", "Q").replaceAll("\\b13\\b", "K").replaceAll("(14|1)", "A")+key.getSecondparam1()).queue());
+                      //    reverseSortedMap.forEach((key, value) -> System.out.println(key.getDiscordTag() + "  has cards:" + String.valueOf(key.getFirstparam()).replaceAll("\\b10\\b", "T").replaceAll("\\b11\\b", "J").replaceAll("\\b12\\b", "Q").replaceAll("\\b13\\b", "K").replaceAll("(14|1)", "A")+key.getSecondparam()+" "+String.valueOf(key.getFirstparam1()).replaceAll("\\b10\\b", "T").replaceAll("\\b11\\b", "J").replaceAll("\\b12\\b", "Q").replaceAll("\\b13\\b", "K").replaceAll("(14|1)", "A")+key.getSecondparam1()));
+                        }
                         for (PokerPlayer player: playersActive) {
                             channel.sendMessage(player.getDiscordTag()+" current Balance:"+player.getBalance()).queue();
                         }
@@ -462,9 +510,15 @@ public class Poker extends ListenerAdapter{
                     for (int i = 0; i < playersActive.size(); i++) {
                         betAmounts.add(i, 0);
                         playersActive.get(i).isFold = false;
+                        playersActive.get(i).isAllIn = false;
                     }
+                    playerValues.clear();
                     cards.clear();
+                    suits.clear();
+                    numbers.clear();
+                    extraOne = false;
                     filling();
+                    cardPool.delete(0,cardPool.length());
                 }
                 channel.sendMessage("Absolute Winner is: " + playersActive.get(0).getDiscordTag()).queue();
                 isPlaying = false;
@@ -677,15 +731,23 @@ public class Poker extends ListenerAdapter{
             }
             filling();
             channel.sendMessage("-> " + connectedChannel.getName() + " -->> " + names).queue();
+            lock.lock();
+            try {
+                messageReceived.signal();
+            } finally {
+                lock.unlock();
+            }
         } else {
             lastMessage = event.getMessage();
             System.out.println(event.getMessage().getContentRaw());
         }
-        lock.lock();
-        try {
-            messageReceived.signal();
-        } finally {
-            lock.unlock();
+        if(isPlaying) {
+            lock.lock();
+            try {
+                messageReceived.signal();
+            } finally {
+                lock.unlock();
+            }
         }
     }
 }
