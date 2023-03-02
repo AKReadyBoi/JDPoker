@@ -797,7 +797,7 @@ public class Poker extends ListenerAdapter {
             this.id = id;
         }
 
-        //    public PokerPlayer getPlayerByDiscordTag(String discordTag) {
+        //
 //
 //    }
         public String getDiscordTag() {
