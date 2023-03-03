@@ -14,7 +14,6 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 /* подправить вывод:
-        1) нет действий при олл-ине
         2) сделать малые и большие блайнды
         3) добавить ничью
         4) добавить слэш-комманды
@@ -43,7 +42,7 @@ public class Poker extends ListenerAdapter {
     static StringBuffer cardPool = new StringBuffer();
 
     public static void main(String[] args) throws InterruptedException {
-        jda = JDABuilder.createDefault("MTA1ODQ2NTM3Njg5MzE0NTIxMQ.GZb_pp.0GbbK98trvXTt69h0hrn3NMFcR38_ajXgv__pU")
+        jda = JDABuilder.createDefault("MTA1ODQ2NTM3Njg5MzE0NTIxMQ.G_zjMe.UpBsaGdIer6eGNrjJiUvuXSI2XlU9xCYMNNiN0")
                 .enableIntents(GatewayIntent.DIRECT_MESSAGES,
                         GatewayIntent.DIRECT_MESSAGE_TYPING,
                         GatewayIntent.DIRECT_MESSAGE_REACTIONS,
