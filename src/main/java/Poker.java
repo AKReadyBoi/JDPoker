@@ -15,10 +15,8 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 /* подправить вывод:
         2) сделать малые и большие блайнды
-        3) добавить ничью
         4) добавить слэш-комманды
-
-        почему playersActive.size() == 1?
+        5) одноразовое использование
  */
 public class Poker extends ListenerAdapter {
     static JDA jda;
@@ -479,7 +477,15 @@ public class Poker extends ListenerAdapter {
                     LinkedHashMap<PokerPlayer, Long> reverseSortedMap = new LinkedHashMap<>();
                     playerValues.entrySet().stream().sorted(Map.Entry.comparingByValue(Comparator.reverseOrder())).forEachOrdered(x -> reverseSortedMap.put(x.getKey(), x.getValue()));
                     Map.Entry<PokerPlayer, Long> firstEntry = reverseSortedMap.entrySet().iterator().next();
-                    firstEntry.getKey().setBalance(firstEntry.getKey().getBalance() + pot);
+                    ArrayList<PokerPlayer> repeatingKeys = new ArrayList<>();
+                    for (Map.Entry<PokerPlayer, Long> entry : reverseSortedMap.entrySet()) {
+                        if (entry.getValue().equals(firstEntry.getValue())) {
+                            repeatingKeys.add(entry.getKey());
+                        }
+                    }
+                    for (PokerPlayer repeatingKey : repeatingKeys) {
+                        repeatingKey.setBalance(repeatingKey.getBalance() + pot/repeatingKeys.size());
+                    }
                     reverseSortedMap.forEach((key, value) -> channel.sendMessage(key.getDiscordTag() + "  has cards:" + String.valueOf(key.getFirstparam()).replaceAll("\\b10\\b", "T").replaceAll("\\b11\\b", "J").replaceAll("\\b12\\b", "Q").replaceAll("\\b13\\b", "K").replaceAll("(14|1)", "A") + key.getSecondparam() + " " + String.valueOf(key.getFirstparam1()).replaceAll("\\b10\\b", "T").replaceAll("\\b11\\b", "J").replaceAll("\\b12\\b", "Q").replaceAll("\\b13\\b", "K").replaceAll("(14|1)", "A") + key.getSecondparam1()).queue());
                     for (PokerPlayer player : playersActive) {
                         channel.sendMessage(player.getDiscordTag() + " current Balance:" + player.getBalance()).queue();
@@ -506,7 +512,15 @@ public class Poker extends ListenerAdapter {
                     LinkedHashMap<PokerPlayer, Long> reverseSortedMap = new LinkedHashMap<>();
                     playerValues.entrySet().stream().sorted(Map.Entry.comparingByValue(Comparator.reverseOrder())).forEachOrdered(x -> reverseSortedMap.put(x.getKey(), x.getValue()));
                     Map.Entry<PokerPlayer, Long> firstEntry = reverseSortedMap.entrySet().iterator().next();
-                    firstEntry.getKey().setBalance(firstEntry.getKey().getBalance() + pot);
+                    ArrayList<PokerPlayer> repeatingKeys = new ArrayList<>();
+                    for (Map.Entry<PokerPlayer, Long> entry : reverseSortedMap.entrySet()) {
+                        if (entry.getValue().equals(firstEntry.getValue())) {
+                            repeatingKeys.add(entry.getKey());
+                        }
+                    }
+                    for (PokerPlayer repeatingKey : repeatingKeys) {
+                        repeatingKey.setBalance(repeatingKey.getBalance() + pot/repeatingKeys.size());
+                    }
                     reverseSortedMap.forEach((key, value) -> channel.sendMessage(key.getDiscordTag() + "  has cards:" + String.valueOf(key.getFirstparam()).replaceAll("\\b10\\b", "T").replaceAll("\\b11\\b", "J").replaceAll("\\b12\\b", "Q").replaceAll("\\b13\\b", "K").replaceAll("(14|1)", "A") + key.getSecondparam() + " " + String.valueOf(key.getFirstparam1()).replaceAll("\\b10\\b", "T").replaceAll("\\b11\\b", "J").replaceAll("\\b12\\b", "Q").replaceAll("\\b13\\b", "K").replaceAll("(14|1)", "A") + key.getSecondparam1()).queue());
                     for (PokerPlayer player : playersActive) {
                         channel.sendMessage(player.getDiscordTag() + " current Balance:" + player.getBalance()).queue();
@@ -601,8 +615,6 @@ public class Poker extends ListenerAdapter {
         Collections.reverse(possibleValues);
         return possibleValues.get(0);
     }
-
-
     public static <T> List<List<T>> combination(List<T> values, int size) {
 
         if (size == 0) {
