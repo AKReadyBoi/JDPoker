@@ -16,6 +16,8 @@ import java.util.concurrent.locks.ReentrantLock;
 /* подправить вывод:
         2) сделать малые и большие блайнды
         5) одноразовое использование
+
+        all-in не работает
  */
 public class Poker extends ListenerAdapter {
     static JDA jda;
@@ -147,7 +149,7 @@ public class Poker extends ListenerAdapter {
                                     }
 
                                     for (int j = 0; j < playersIn.size(); j++) {
-                                        if (playersIn.get(j).isFold||playersIn.get(j).isAllIn) {
+                                        if (playersIn.get(j).isFold) {
                                             betAmounts.remove(j);
                                             playersIn.remove(playersIn.get(j));
                                             i--;
@@ -242,7 +244,7 @@ public class Poker extends ListenerAdapter {
                                         }
 
                                         for (int j = 0; j < playersIn.size(); j++) {
-                                            if (playersIn.get(j).isFold||playersIn.get(j).isAllIn) {
+                                            if (playersIn.get(j).isFold) {
                                                 betAmounts.remove(j);
                                                 playersIn.remove(playersIn.get(j));
                                                 i--;
@@ -336,7 +338,7 @@ public class Poker extends ListenerAdapter {
                                         }
 
                                         for (int j = 0; j < playersIn.size(); j++) {
-                                            if (playersIn.get(j).isFold||playersIn.get(j).isAllIn) {
+                                            if (playersIn.get(j).isFold) {
                                                 betAmounts.remove(j);
                                                 playersIn.remove(playersIn.get(j));
                                                 i--;
@@ -430,7 +432,7 @@ public class Poker extends ListenerAdapter {
                                         }
 
                                         for (int j = 0; j < playersIn.size(); j++) {
-                                            if (playersIn.get(j).isFold||playersIn.get(j).isAllIn) {
+                                            if (playersIn.get(j).isFold) {
                                                 betAmounts.remove(j);
                                                 playersIn.remove(playersIn.get(j));
                                                 i--;
@@ -772,5 +774,3 @@ public class Poker extends ListenerAdapter {
         }
     }
 }
-
-
