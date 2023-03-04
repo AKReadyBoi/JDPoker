@@ -1,13 +1,13 @@
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
-import net.dv8tion.jda.api.entities.Activity;
-import net.dv8tion.jda.api.entities.Member;
-import net.dv8tion.jda.api.entities.Message;
-import net.dv8tion.jda.api.entities.User;
+import net.dv8tion.jda.api.entities.*;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
 import net.dv8tion.jda.api.entities.channel.concrete.VoiceChannel;
+import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
+import net.dv8tion.jda.api.events.session.ReadyEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.interactions.commands.build.*;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import java.util.*;
 import java.util.concurrent.locks.Condition;
@@ -15,7 +15,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 /* подправить вывод:
         2) сделать малые и большие блайнды
-        4) добавить слэш-комманды
         5) одноразовое использование
  */
 public class Poker extends ListenerAdapter {
@@ -40,7 +39,7 @@ public class Poker extends ListenerAdapter {
     static StringBuffer cardPool = new StringBuffer();
 
     public static void main(String[] args) throws InterruptedException {
-        jda = JDABuilder.createDefault("MTA1ODQ2NTM3Njg5MzE0NTIxMQ.G_zjMe.UpBsaGdIer6eGNrjJiUvuXSI2XlU9xCYMNNiN0")
+        jda = JDABuilder.createDefault("token")
                 .enableIntents(GatewayIntent.DIRECT_MESSAGES,
                         GatewayIntent.DIRECT_MESSAGE_TYPING,
                         GatewayIntent.DIRECT_MESSAGE_REACTIONS,
@@ -64,7 +63,6 @@ public class Poker extends ListenerAdapter {
         }
         new Poker().start();
     }
-
     public void start() throws InterruptedException {
         if (isPlaying) {
             ArrayList<PokerPlayer> playersIn = new ArrayList<>();
@@ -496,8 +494,6 @@ public class Poker extends ListenerAdapter {
                             playersIn.add(player);
                         }
                     }
-                    System.out.println(playersIn);
-                    System.out.println(playersActive);
                     for (PokerPlayer players : playersIn) {
                         deckNumbers.add(players.getFirstparam());
                         deckNumbers.add(players.getFirstparam1());
@@ -526,7 +522,6 @@ public class Poker extends ListenerAdapter {
                         channel.sendMessage(player.getDiscordTag() + " current Balance:" + player.getBalance()).queue();
                     }
                 }
-                System.out.println(playersActive);
                 playersActive.removeIf(player -> player.getBalance() == 0);
                 playersIn.clear();
                 playersIn.addAll(playersActive);
@@ -654,15 +649,15 @@ public class Poker extends ListenerAdapter {
         int i = 1;
         boolean pair = false;
         boolean set = false;
-        int pairint = 0;
-        int setint = 0;
+        int pairInt = 0;
+        int setInt = 0;
         boolean a = true;
         for (Map.Entry<Integer, Integer> entry : counts.entrySet()) {
             if (entry.getValue() == 2) {
                 if (a) {
                     newList.add(entry.getKey());
                     newList.add(entry.getKey());
-                    pairint = entry.getKey();
+                    pairInt = entry.getKey();
                     Collections.sort(newList);
                     Collections.reverse(newList);
                     cs.remove(entry.getKey());
@@ -685,7 +680,7 @@ public class Poker extends ListenerAdapter {
                     newList.add(entry.getKey());
                     newList.add(entry.getKey());
                     Collections.sort(newList);
-                    setint = entry.getKey();
+                    setInt = entry.getKey();
                     Collections.reverse(newList);
                     cs.remove(entry.getKey());
                     cs.remove(entry.getKey());
@@ -711,7 +706,7 @@ public class Poker extends ListenerAdapter {
 
         }
         if (set && pair) {
-            if (setint < pairint) {
+            if (setInt < pairInt) {
                 Collections.sort(newList);
             }
             newList.addAll(cs);
@@ -734,13 +729,33 @@ public class Poker extends ListenerAdapter {
 
     @Override
     public void onMessageReceived(MessageReceivedEvent event) {
+        lastMessage = event.getMessage();
+        if (isPlaying) {
+            lock.lock();
+            try {
+                messageReceived.signal();
+            } finally {
+                lock.unlock();
+            }
+        }
+    }
+    @Override
+    public void onReady(ReadyEvent event) {
+        List<CommandData> commandData = new ArrayList<>();
+        commandData.add(Commands.slash("startgame", "Begin the game with people in current vc"));
+        event.getJDA().updateCommands().addCommands(commandData).queue();
+    }
+
+    @Override
+    public void onSlashCommandInteraction(SlashCommandInteractionEvent event) {
         TextChannel channel = (TextChannel) event.getChannel();
         VoiceChannel connectedChannel = (VoiceChannel) Objects.requireNonNull(Objects.requireNonNull(event.getMember()).getVoiceState()).getChannel();
         Poker.connectedChannel = connectedChannel;
         Poker.channel = channel;
         channel.getManager().setSlowmode(0).queue();
         playersAmount = connectedChannel.getMembers().size();
-        if (event.getMessage().getContentRaw().equals("!startgame") && !isPlaying) {
+        if (event.getName().equals("startgame") && !isPlaying) {
+            event.reply("Starting new game...").queue();
             for (Member member : connectedChannel.getMembers()) {
                 names.add(member.getUser().getName() + "#" + member.getUser().getDiscriminator());
                 ids.add(member.getIdLong());
@@ -748,17 +763,6 @@ public class Poker extends ListenerAdapter {
             }
             filling();
             channel.sendMessage("-> " + connectedChannel.getName() + " -->> " + names).queue();
-            lock.lock();
-            try {
-                messageReceived.signal();
-            } finally {
-                lock.unlock();
-            }
-        } else {
-            lastMessage = event.getMessage();
-            System.out.println(event.getMessage().getContentRaw());
-        }
-        if (isPlaying) {
             lock.lock();
             try {
                 messageReceived.signal();
