@@ -9,6 +9,8 @@ import net.dv8tion.jda.api.events.session.ReadyEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.build.*;
 import net.dv8tion.jda.api.requests.GatewayIntent;
+
+import java.io.*;
 import java.util.*;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -16,8 +18,6 @@ import java.util.concurrent.locks.ReentrantLock;
 /* подправить вывод:
         2) сделать малые и большие блайнды
         5) одноразовое использование
-
-        all-in не работает
  */
 public class Poker extends ListenerAdapter {
     static JDA jda;
@@ -41,7 +41,7 @@ public class Poker extends ListenerAdapter {
     static StringBuffer cardPool = new StringBuffer();
 
     public static void main(String[] args) throws InterruptedException {
-        jda = JDABuilder.createDefault("token")
+        jda = JDABuilder.createDefault("MTA1ODQ2NTM3Njg5MzE0NTIxMQ.G8kJ9x.C1Xwhj2AUTqhiLKOQdItAYz3nTDooA_WFlmCQY")
                 .enableIntents(GatewayIntent.DIRECT_MESSAGES,
                         GatewayIntent.DIRECT_MESSAGE_TYPING,
                         GatewayIntent.DIRECT_MESSAGE_REACTIONS,
@@ -757,6 +757,7 @@ public class Poker extends ListenerAdapter {
         channel.getManager().setSlowmode(0).queue();
         playersAmount = connectedChannel.getMembers().size();
         if (event.getName().equals("startgame") && !isPlaying) {
+            if(playersAmount<=1) return;
             event.reply("Starting new game...").queue();
             for (Member member : connectedChannel.getMembers()) {
                 names.add(member.getUser().getName() + "#" + member.getUser().getDiscriminator());
@@ -764,7 +765,28 @@ public class Poker extends ListenerAdapter {
                 isPlaying = true;
             }
             filling();
-            channel.sendMessage("-> " + connectedChannel.getName() + " -->> " + names).queue();
+            File totalGames = new File("totalGames.jdp");
+            int number;
+            try {
+                FileInputStream fileIn = new FileInputStream(totalGames);
+                ObjectInputStream in = new ObjectInputStream(fileIn);
+                number = (int) in.readObject();
+                in.close();
+                fileIn.close();
+            } catch (IOException | ClassNotFoundException e) {
+                number = 0;
+            }
+            number++;
+            try {
+                FileOutputStream fileOut = new FileOutputStream(totalGames);
+                ObjectOutputStream out = new ObjectOutputStream(fileOut);
+                out.writeObject(number);
+                out.close();
+                fileOut.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            channel.sendMessage("Game #"+number+": "+String.join(", ",names)).queue();
             lock.lock();
             try {
                 messageReceived.signal();
