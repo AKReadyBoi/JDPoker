@@ -9,7 +9,6 @@ import net.dv8tion.jda.api.events.session.ReadyEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import net.dv8tion.jda.api.interactions.commands.build.*;
 import net.dv8tion.jda.api.requests.GatewayIntent;
-
 import java.io.*;
 import java.util.*;
 import java.util.concurrent.locks.Condition;
@@ -17,7 +16,6 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 /* подправить вывод:
         2) сделать малые и большие блайнды
-        5) одноразовое использование
  */
 public class Poker extends ListenerAdapter {
     static JDA jda;
@@ -57,13 +55,24 @@ public class Poker extends ListenerAdapter {
         for (int i = 2; i <= 14; i++) {
             numbers.add(i);
         }
-        lock.lock();
-        try {
-            messageReceived.await();
-        } finally {
-            lock.unlock();
-        }
-        new Poker().start();
+        Thread t = new Thread(() -> {
+            while (true) {
+                lock.lock();
+                try {
+                    messageReceived.await();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } finally {
+                    lock.unlock();
+                }
+                try {
+                    new Poker().start();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+        t.start();
     }
     public void start() throws InterruptedException {
         if (isPlaying) {
@@ -543,6 +552,16 @@ public class Poker extends ListenerAdapter {
             }
             channel.sendMessage("Absolute Winner is: " + playersActive.get(0).getDiscordTag()).queue();
             isPlaying = false;
+            playersActive.clear();
+            playersIn.clear();
+            cards.clear();
+            cardPool.delete(0, cardPool.length());
+            playerValues.clear();
+            pot=0;
+            playersAmount=0;
+            ids.clear();
+            deckNumbers.clear();
+            deckSuits.clear();
             names.clear();
         }
     }
