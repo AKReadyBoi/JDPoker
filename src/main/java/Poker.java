@@ -14,9 +14,7 @@ import java.util.*;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-/* подправить вывод:
-        2) сделать малые и большие блайнды
- */
+//     2) сделать малые и большие блайнды
 public class Poker extends ListenerAdapter {
     static JDA jda;
     static ArrayList<String> cards = new ArrayList<>();
